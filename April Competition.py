@@ -85,8 +85,8 @@ for i in ['Embarked', 'Cabin_Letter']:
 
 # Try Logistic and Random Forest again
 # Logistic model
-model = sklearn.linear_model.LogisticRegression().fit(train_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']], train_df.Survived) # 'Pclass',
-prediction3_df = pd.Series(model.predict(test_df[['Pclass', 'SibSp', 'Parch',  'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']]))
+model2 = sklearn.linear_model.LogisticRegression().fit(train_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']], train_df.Survived) # 'Pclass',
+prediction3_df = pd.Series(model2.predict(test_df[['Pclass', 'SibSp', 'Parch',  'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']]))
 prediction3_df = pd.concat([Test_IDs, prediction3_df], axis = 1)
 prediction3_df = pd.DataFrame(prediction3_df)
 prediction3_df.columns = ['PassengerId', 'Survived']
@@ -94,12 +94,26 @@ prediction3_df.to_csv('prediction3.csv', index = False)
 
 
 # Random Forest
-forest1 = sklearn.ensemble.RandomForestClassifier(n_estimators = 125).fit(train_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']],
+forest2 = sklearn.ensemble.RandomForestClassifier(n_estimators = 125).fit(train_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']],
                                                                           train_df.Survived)
-prediction4_df = forest1.predict(test_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']])
+prediction4_df = forest2.predict(test_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']])
 prediction4_df = pd.DataFrame(prediction4_df)
 prediction4_df = pd.concat([Test_IDs, prediction4_df], axis = 1)
 prediction4_df.columns = ['PassengerId', 'Survived']
 prediction4_df.to_csv('prediction4.csv', index = False)
 
+# Now we separate datas with and without Age and use Age as well
+train_df_age = train_df[train_df.Age.notna()]
+test_df_age = test_df[test_df.Age.notna()]
+test_id_age = Test_IDs[test_df[test_df.Age.notna()].index]
+# Run Random Forest
 
+forest3 = sklearn.ensemble.RandomForestClassifier(n_estimators = 125).fit(train_df_age[['Pclass', 'Age', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']],
+                                                                          train_df_age.Survived)
+prediction5_df = forest3.predict(test_df_age[['Pclass', 'Age', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']])
+prediction5_df = pd.DataFrame(prediction5_df)
+prediction5_df = pd.concat([test_id_age, prediction5_df], axis = 1)
+prediction5_df = prediction5_df.drop(columns = ['index'])
+prediction5_df.columns = ['PassengerId', 'Survived']
+prediction5_df = pd.concat([prediction4_df[prediction4_df.index.isin(test_df[test_df.Age.isna()].index)], prediction5_df], axis = 0)
+prediction5_df.to_csv('prediction5.csv', index = False)
