@@ -76,3 +76,30 @@ prediction2_df = pd.concat([Test_IDs, prediction2_df], axis = 1)
 prediction2_df.columns = ['PassengerId', 'Survived']
 prediction2_df.to_csv('prediction2.csv', index = False)
 
+# Add categorical variables
+
+for i in ['Embarked', 'Cabin_Letter']:
+        train_df= pd.concat([train_df,pd.get_dummies(train_df[i])], axis = 1)
+        test_df = pd.concat([test_df, pd.get_dummies(test_df[i])], axis = 1)
+
+
+# Try Logistic and Random Forest again
+# Logistic model
+model = sklearn.linear_model.LogisticRegression().fit(train_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']], train_df.Survived) # 'Pclass',
+prediction3_df = pd.Series(model.predict(test_df[['Pclass', 'SibSp', 'Parch',  'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']]))
+prediction3_df = pd.concat([Test_IDs, prediction3_df], axis = 1)
+prediction3_df = pd.DataFrame(prediction3_df)
+prediction3_df.columns = ['PassengerId', 'Survived']
+prediction3_df.to_csv('prediction3.csv', index = False)
+
+
+# Random Forest
+forest1 = sklearn.ensemble.RandomForestClassifier(n_estimators = 125).fit(train_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']],
+                                                                          train_df.Survived)
+prediction4_df = forest1.predict(test_df[['Pclass', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']])
+prediction4_df = pd.DataFrame(prediction4_df)
+prediction4_df = pd.concat([Test_IDs, prediction4_df], axis = 1)
+prediction4_df.columns = ['PassengerId', 'Survived']
+prediction4_df.to_csv('prediction4.csv', index = False)
+
+
