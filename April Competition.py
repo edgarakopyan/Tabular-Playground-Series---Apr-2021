@@ -78,9 +78,9 @@ prediction2_df.to_csv('prediction2.csv', index = False)
 
 # Add categorical variables
 
-for i in ['Embarked', 'Cabin_Letter']:
-        train_df= pd.concat([train_df,pd.get_dummies(train_df[i])], axis = 1)
-        test_df = pd.concat([test_df, pd.get_dummies(test_df[i])], axis = 1)
+for i in ['Embarked', 'Cabin_Letter', 'Pclass']:
+        train_df= pd.concat([train_df,pd.get_dummies(train_df[i], prefix = "A")], axis = 1)
+        test_df = pd.concat([test_df, pd.get_dummies(test_df[i], prefix = "A")], axis = 1)
 
 
 # Try Logistic and Random Forest again
@@ -108,12 +108,17 @@ test_df_age = test_df[test_df.Age.notna()]
 test_id_age = Test_IDs[test_df[test_df.Age.notna()].index]
 # Run Random Forest
 
-forest3 = sklearn.ensemble.RandomForestClassifier(n_estimators = 125).fit(train_df_age[['Pclass', 'Age', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']],
+forest3 = sklearn.ensemble.RandomForestClassifier(n_estimators = 500).fit(train_df_age[['A_1', 'A_2', 'A_3', 'Age', 'SibSp', 'Parch', 'female', 'A_C', 'A_Q', 'A_S', 'A_A', 'A_B', 'A_C', 'A_D', 'A_E', 'A_F', 'A_G','A_T']],
                                                                           train_df_age.Survived)
-prediction5_df = forest3.predict(test_df_age[['Pclass', 'Age', 'SibSp', 'Parch', 'female', 'C', 'Q', 'S', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'T']])
+prediction5_df = forest3.predict(test_df_age[['A_1', 'A_2', 'A_3', 'Age', 'SibSp', 'Parch', 'female', 'A_C', 'A_Q', 'A_S', 'A_A', 'A_B', 'A_C', 'A_D', 'A_E', 'A_F', 'A_G','A_T']])
 prediction5_df = pd.DataFrame(prediction5_df)
+test_id_age = test_id_age.reset_index()
+test_id_age = test_id_age.drop(['index'], axis = 1)
 prediction5_df = pd.concat([test_id_age, prediction5_df], axis = 1)
-prediction5_df = prediction5_df.drop(columns = ['index'])
 prediction5_df.columns = ['PassengerId', 'Survived']
 prediction5_df = pd.concat([prediction4_df[prediction4_df.index.isin(test_df[test_df.Age.isna()].index)], prediction5_df], axis = 0)
 prediction5_df.to_csv('prediction5.csv', index = False)
+
+# Look at the importance of each feature
+for feature, i in zip(['A_1', 'A_2', 'A_3', 'Age', 'SibSp', 'Parch', 'female', 'A_C', 'A_Q', 'A_S', 'A_A', 'A_B', 'A_C', 'A_D', 'A_E', 'A_F', 'A_G','A_T'], forest3.feature_importances_):
+    print(feature, i)
