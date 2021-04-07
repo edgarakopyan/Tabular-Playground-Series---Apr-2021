@@ -6,6 +6,7 @@ import sklearn.linear_model
 import sklearn.ensemble
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
 
 pd.options.mode.chained_assignment = None
 
@@ -171,11 +172,10 @@ test_df2 = total_df_new.iloc[100000:, :]
 test_df2 = test_df2.drop(['Survived'], axis = 1)
 
 # Now let's retry the Logistic model
-
-model3 = sklearn.linear_model.LogisticRegression().fit(train_df2[['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7']], train_df2.Survived) # 'Pclass',
-prediction7_df = pd.Series(model3.predict(test_df2[['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7']]))
-prediction7_df = pd.concat([Test_IDs, prediction7_df], axis = 1)
-prediction7_df.columns = ['PassengerId', 'Survived']
-prediction7_df['Survived'] = prediction7_df.Survived.astype(int)
-prediction7_df.to_csv('prediction7.csv', index = False)
+X_train, X_test, y_train, y_test = train_test_split(train_df2[['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7']], train_df2.Survived, test_size=0.33, random_state=42)
+forest3 = sklearn.ensemble.RandomForestClassifier(n_estimators = 500, max_depth = 10).fit(X_train, y_train)
+prediction7_df = forest3.predict(X_test)
+score = forest3.score(X_test, y_test)
+score
+forest3.feature_importances_
 
