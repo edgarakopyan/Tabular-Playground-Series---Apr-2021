@@ -4,6 +4,8 @@ import numpy as np
 import sklearn.preprocessing as skp
 import sklearn.linear_model
 import sklearn.ensemble
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 pd.options.mode.chained_assignment = None
 
@@ -122,3 +124,58 @@ prediction5_df.to_csv('prediction5.csv', index = False)
 # Look at the importance of each feature
 for feature, i in zip(['A_1', 'A_2', 'A_3', 'Age', 'SibSp', 'Parch', 'female', 'A_C', 'A_Q', 'A_S', 'A_A', 'A_B', 'A_C', 'A_D', 'A_E', 'A_F', 'A_G','A_T'], forest3.feature_importances_):
     print(feature, i)
+# Most important are Age and whether the person is fe(male).
+# We can also see, that addition of Age did not significantly improve the prediction performance.
+
+# We now try PCA dimensionality reduction on our data. For this, we first combine the test and train data
+# to make sure that columns we get in the end are the same in both datasets
+
+train_df = train_df.reset_index(drop = True)
+test_df = test_df.reset_index(drop = True)
+test_df.insert(loc = 0, column = 'Survived', value= np.nan)
+total_df = pd.concat([train_df.drop(['PassengerId'], axis = 1), test_df]) # , axis = 0, ignore_index=True
+total_df = total_df.reset_index(drop=True)
+# Now remove the survived column and remove non-float columns
+Survived_PCA = total_df.Survived
+total_df = total_df.drop(['Survived', 'Cabin', 'Embarked', 'Ticket', 'Pclass', 'Cabin_Letter', 'Cabin_Number'], axis= 1)
+# Before we proceed we impute the Age data
+total_df_age = total_df[~total_df.Age.isna()]
+total_df_age = total_df_age.reset_index(drop=True)
+Agemodel = sklearn.linear_model.LinearRegression().fit(total_df_age[['SibSp', 'Parch', 'female']], total_df_age.Age)
+Agemodel.score(total_df_age[['SibSp', 'Parch', 'female']], total_df_age.Age)
+# This only predicts 2% of the age
+# Another option would be to just drop the column
+total_df = total_df.drop(['Age', 'Fare'], axis = 1)
+
+# And now we do PCA
+pca = PCA()
+pca.fit(total_df)
+cumsum = np.cumsum(pca.explained_variance_ratio_)
+plt.scatter( range(0, len(pca.explained_variance_ratio_)), cumsum)
+plt.show()
+
+# As we see, with 7 features we can explain more than 95% of the variance
+
+pca = PCA(n_components= 7)
+total_df_new = pca.fit_transform(total_df)
+total_df_new = pd.DataFrame(total_df_new, columns= ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7'])
+
+# And we add back in the survived column
+
+total_df_new = pd.concat([total_df_new, Survived_PCA], axis = 1)
+
+# And we separate again into train and test data
+
+train_df2 = total_df_new.iloc[:100000, :]
+test_df2 = total_df_new.iloc[100000:, :]
+test_df2 = test_df2.drop(['Survived'], axis = 1)
+
+# Now let's retry the Logistic model
+
+model3 = sklearn.linear_model.LogisticRegression().fit(train_df2[['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7']], train_df2.Survived) # 'Pclass',
+prediction7_df = pd.Series(model3.predict(test_df2[['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7']]))
+prediction7_df = pd.concat([Test_IDs, prediction7_df], axis = 1)
+prediction7_df.columns = ['PassengerId', 'Survived']
+prediction7_df['Survived'] = prediction7_df.Survived.astype(int)
+prediction7_df.to_csv('prediction7.csv', index = False)
+
